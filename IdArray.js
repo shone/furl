@@ -3,10 +3,9 @@
 const idArray = Symbol('IdArray');
 const arrayIndex = Symbol('Array index');
 
-const convertIdArrayToBlockTripleSet = Symbol('Convert IdArray to BlockTripleSet');
 blocks.push({
-	id: func,
-	head: convertIdArrayToBlockTripleSet,
+	type: func,
+	head: Symbol('Convert IdArray to BlockTripleSet'),
 	value: {
 		conversion: {
 			from: idArray,
@@ -17,11 +16,11 @@ blocks.push({
 			for (const [index, id] of idArray.value.entries()) {
 				set.add([
 					{head: idArray.head},
-					{id: arrayIndex, value: index},
+					{type: arrayIndex, value: index},
 					{head: id},
 				]);
 			}
-			return {id: 'BlockTripleSet', head: idArray.head, value: set};
+			return {type: blockTripleSet, head: idArray.head, value: set};
 		}
 	}
 });
@@ -50,24 +49,23 @@ blocks.push({
 // 	}
 // });
 
-const convertBlockTripleSetToIdArrayInplace = Symbol('Convert BlockTripleSet to IdArray in-place');
 blocks.push({
-	id: func,
-	head: convertBlockTripleSetToIdArrayInplace,
+	type: func,
+	head: Symbol('Convert BlockTripleSet to IdArray in-place'),
 	value: {
 		conversion: {
 			from: blockTripleSet,
 			to: idArray,
 		},
-		arg: {blockId: blockTripleSet},
+		arg: {type: blockTripleSet},
 		func: block => {
 			const ids = [];
 			block.value.forEach(triple => {
-				if (triple[0].id === block.head && triple[1].id === arrayIndex) {
-					ids[triple[1].value] = triple[2].id;
+				if (triple[0].head === block.head && triple[1].id === arrayIndex) {
+					ids[triple[1].value] = triple[2].head;
 				}
 			});
-			block.id = idArray;
+			block.type = idArray;
 			block.value = {
 				ids: ids,
 			}

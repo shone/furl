@@ -10,20 +10,14 @@ function BlockTripleSet() {
 	const valToCounter = new Map();
 	const countersToVal = new Map();
 
-	// const idsToCounter = new Map();
-	// const countersToId = new Map();
- // 
-	// const valuesToCounter = new Map();
-	// const countersToValue = new Map();
-
 	function addBlock(block) {
-		let idCounter = null;
-		if (block.id) {
-			idCounter = valToCounter.get(block.id);
-			if (!idCounter) {
-				idCounter = counter++;
-				valToCounter.set(block.id, idCounter);
-				countersToVal.set(idCounter, block.id);
+		let typeCounter = null;
+		if (block.type) {
+			typeCounter = valToCounter.get(block.type);
+			if (!typeCounter) {
+				typeCounter = counter++;
+				valToCounter.set(block.type, typeCounter);
+				countersToVal.set(typeCounter, block.type);
 			}
 		}
 		let headCounter = null;
@@ -44,18 +38,18 @@ function BlockTripleSet() {
 				countersToVal.set(valueCounter, block.value);
 			}
 		}
-		return {idCounter, headCounter, valueCounter};
+		return {typeCounter, headCounter, valueCounter};
 	}
 	function getBlockCounters(block) {
 		return {
-			idCounter:    valToCounter.get(block.id),
+			typeCounter:    valToCounter.get(block.type),
 			headCounter:  valToCounter.get(block.head),
 			valueCounter: valToCounter.get(block.value),
 		}
 	}
-	function getBlockFromCounters({idCounter, headCounter, valueCounter}) {
+	function getBlockFromCounters({typeCounter, headCounter, valueCounter}) {
 		return {
-			id:    countersToVal.get(idCounter),
+			type:  countersToVal.get(typeCounter),
 			head:  countersToVal.get(headCounter),
 			value: countersToVal.get(valueCounter),
 		}
@@ -86,10 +80,9 @@ function BlockTripleSet() {
 	}
 }
 
-const convertBlockTripleArrayToBlockTripleSet = Symbol('Convert BlockTripleArray to BlockTripleSet');
 blocks.push({
-	id: func,
-	head: convertBlockTripleArrayToBlockTripleSet,
+	type: func,
+	head: Symbol('Convert BlockTripleArray to BlockTripleSet'),
 	value: {
 		conversion: {
 			from: blockTripleArray,
@@ -97,18 +90,17 @@ blocks.push({
 		},
 		func: array => {
 			const set = BlockTripleSet();
-			for (const block of array) {
+			for (const block of array.value) {
 				set.add(block);
 			}
-			return set;
+			return {type: blockTripleSet, head: array.head, value: set};
 		}
 	}
 });
 
-const convertBlockTripleSetToBlockTripleArray = Symbol('Convert BlockTripleSet to BlockTripleArray');
 blocks.push({
-	id: func,
-	head: convertBlockTripleSetToBlockTripleArray,
+	type: func,
+	head: Symbol('Convert BlockTripleSet to BlockTripleArray'),
 	value: {
 		conversion: {
 			from: blockTripleSet,
@@ -117,15 +109,14 @@ blocks.push({
 		func: set => {
 			const array = [];
 			set.value.forEach(triple => array.push(triple));
-			return {id: blockTripleArray, value: array};
+			return {type: blockTripleArray, head: set.head, value: array};
 		}
 	}
 });
 
-const mergeBlockTripleSet = Symbol('Merge BlockTripleSet');
 blocks.push({
-	id: func,
-	head: mergeBlockTripleSet,
+	type: func,
+	head: Symbol('Merge BlockTripleSet'),
 	value: {
 		merge: blockTripleSet,
 		func: sets => {

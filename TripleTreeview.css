@@ -1,0 +1,18 @@
+triple-treeview .triple {
+	margin-bottom: 8px;
+}
+
+triple-treeview .block {
+	background: black;
+	color: white;
+	font-weight: bold;
+	border: 2px solid black;
+	border-radius: 5px;
+	box-sizing: border-box;
+	margin: 3px;
+	cursor: pointer;
+}
+triple-treeview .block:hover {
+	background: white;
+	color: black;
+}

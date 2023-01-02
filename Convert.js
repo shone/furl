@@ -3,7 +3,7 @@
 const convert = Symbol('Convert');
 
 function findConversionPath(sourceType, targetType) {
-	const conversions = blocks.filter(block => block.id === func && block.value.conversion).map(block => block.value);
+	const conversions = blocks.filter(block => block.type === func && block.value.conversion).map(block => block.value);
 	const visitedTypes = new Set();
 	const parents = new Map();
 	const queue = [sourceType];
@@ -35,38 +35,28 @@ function findConversionPath(sourceType, targetType) {
 	return path;
 }
 
-function Convert({source, targetId}) {
-	if (source.id === targetId) {
-		return source;
+function Convert({block, type}) {
+	if (block.type === type) {
+		return block;
 	}
-	const conversionPath = findConversionPath(source.id, targetId);
+	const conversionPath = findConversionPath(block.type, type);
 	if (!conversionPath) {
 		return null;
 	}
-	let currentBlock = source;
+	let convertedBlock = block;
 	for (const conversion of conversionPath) {
-		currentBlock = conversion.func(currentBlock);
+		convertedBlock = conversion.func(convertedBlock);
 	}
-	return currentBlock;
-	// const conversion = blocks.find(b => {
-	// 	return b.id === func && b.value.conversion &&
-	// 		b.value.conversion.from === source.id &&
-	// 		b.value.conversion.to === targetId;
-	// });
-	// if (!conversion) {
-	// 	return null;
-	// 	// throw `Unable to find conversion from ${String(source.id)} to ${String(targetId)}`;
-	// }
-	// return conversion.value.func(source.value);
+	return convertedBlock;
 }
 
 blocks.push({
-	id: func,
+	type: func,
 	head: convert,
 	value: {
 		args: {
-			source: {},
-			targetId: {},
+			block: {},
+			type: {},
 		},
 		func: Convert,
 	}

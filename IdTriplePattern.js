@@ -3,7 +3,7 @@
 const idTriplePattern = Symbol('IdTriplePattern');
 
 blocks.push({
-	id: func,
+	type: func,
 	head: idTriplePattern,
 	value: {
 		conversion: {
@@ -12,7 +12,7 @@ blocks.push({
 		},
 		func: block => {
 			return {
-				id: block.id,
+				type: block.type,
 				head: block.head,
 				value: block.value.ids.map(id => [
 					block.value.from || id,

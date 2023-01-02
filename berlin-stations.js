@@ -12,7 +12,7 @@ const winsStr = Symbol('Winsstr.');
 const greifsDanzStr = Symbol('Greifswalder Str./Danziger Str.');
 
 blocks.push({
-	id: idTriplePattern,
+	type: idTriplePattern,
 	value: {
 		via: is,
 		to: station,
@@ -21,19 +21,19 @@ blocks.push({
 });
 
 blocks.push({
-	id: blockTripleArray,
+	type: blockTripleArray,
 	value: [
 		[{head: m10line},         {head: is},    {head: transitLine}],
-		[{head: eberswalderStr},  {head: label}, {id: string, value: 'Eberswalder Str.'}],
-		[{head: husemannStr},     {head: label}, {id: string, value: 'Husemann Str.'}],
-		[{head: prenzDanz},       {head: label}, {id: string, value: 'Prenzlauer Allee/Danziger Str.'}],
-		[{head: winsStr},         {head: label}, {id: string, value: 'Winsstr.'}],
-		[{head: greifsDanzStr},   {head: label}, {id: string, value: 'Greifswalder Str.'}],
+		[{head: eberswalderStr},  {head: label}, {type: string, value: 'Eberswalder Str.'}],
+		[{head: husemannStr},     {head: label}, {type: string, value: 'Husemann Str.'}],
+		[{head: prenzDanz},       {head: label}, {type: string, value: 'Prenzlauer Allee/Danziger Str.'}],
+		[{head: winsStr},         {head: label}, {type: string, value: 'Winsstr.'}],
+		[{head: greifsDanzStr},   {head: label}, {type: string, value: 'Greifswalder Str.'}],
 	],
 });
 
 blocks.push({
-	id: idArray,
+	type: idArray,
 	head: m10line,
 	value: [greifsDanzStr, winsStr, prenzDanz, husemannStr, eberswalderStr],
 });

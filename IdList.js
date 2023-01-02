@@ -2,10 +2,9 @@
 
 const idList = Symbol('IdList');
 
-const convertIdListToIdTripleArray = Symbol('Convert IdList to IdTripleArray');
 blocks.push({
-	id: func,
-	head: convertIdListToIdTripleArray,
+	type: func,
+	head: Symbol('Convert IdList to IdTripleArray'),
 	value: {
 		conversion: {
 			from: idList,
@@ -14,17 +13,17 @@ blocks.push({
 		func: idList => {
 			const triples = [];
 			let prev = null;
-			for (const id of idList.ids) {
+			for (const id of idList.value.ids) {
 				if (prev) {
-					triples.push([
-						{id: prev},
-						{id: pattern.next},
-						{id: id},
-					]);
+					triples.push([prev, pattern.next, id]);
 				}
 				prev = id;
 			}
-			return triples;
+			return {
+				type: idTripleArray,
+				head: idList.head,
+				value: triples,
+			}
 		}
 	}
 });
