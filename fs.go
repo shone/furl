@@ -19,14 +19,19 @@ var (
 )
 
 func dirToStream(path string, w io.Writer) error {
-	writeLink(w, IS, UTF8, []byte("is"))
-	writeLink(w, DIR, UTF8, []byte("Dir"))
-	writeLink(w, UTF8, UTF8, []byte("UTF8"))
-	writeLink(w, FILE_CONTENT, UTF8, []byte("file-content"))
-	writeLink(w, NAME, UTF8, []byte("name"))
-	writeLink(w, BYTES, UTF8, []byte("bytes"))
-	writeLink(w, MIME_TYPE, UTF8, []byte("mime-type"))
-	writeLink(w, NEXT_FS_ENTRY, UTF8, []byte("next-fs-entry"))
+	err := writeLinks(w, [][3][]byte{
+		{IS, UTF8, []byte("is")},
+		{DIR, UTF8, []byte("Dir")},
+		{UTF8, UTF8, []byte("UTF8")},
+		{FILE_CONTENT, UTF8, []byte("file-content")},
+		{NAME, UTF8, []byte("name")},
+		{BYTES, UTF8, []byte("bytes")},
+		{MIME_TYPE, UTF8, []byte("mime-type")},
+		{NEXT_FS_ENTRY, UTF8, []byte("next-fs-entry")},
+	})
+	if err != nil {
+		return err
+	}
 
 	rnd := rand.New(rand.NewSource(0))
 	makeNode := func () []byte {
@@ -52,11 +57,19 @@ func dirToStream(path string, w io.Writer) error {
 	var prevEntry []byte
 	for _, entry := range entries {
 		entryNode := makeNode()
-		writeLink(w, entryNode, IS, DIR)
-		writeLink(w, entryNode, UTF8, []byte(entry.Name()))
+		err = writeLinks(w, [][3][]byte{
+			// {entryNode, IS, DIR},
+			{entryNode, UTF8, []byte(entry.Name())},
+		})
+		if err != nil {
+			return err
+		}
 
 		if len(prevEntry) > 0 {
-			writeLink(w, prevEntry, NEXT_FS_ENTRY, entryNode)
+			err = writeLink(w, prevEntry, NEXT_FS_ENTRY, entryNode)
+			if err != nil {
+				return err
+			}
 		}
 		prevEntry = entryNode
 
@@ -67,20 +80,31 @@ func dirToStream(path string, w io.Writer) error {
 			}
 
 			fileContentNode := makeNode()
-			writeLink(w, entryNode, FILE_CONTENT, fileContentNode)
+			err = writeLink(w, entryNode, FILE_CONTENT, fileContentNode)
+			if err != nil {
+				return err
+			}
 
 			ext := filepath.Ext(entry.Name())
 			mimeType := mime.TypeByExtension(ext)
 
 			if mimeType != "" {
-				writeLink(w, entryNode, MIME_TYPE, []byte(mimeType))
-				writeLink(w, makeNode(), UTF8, []byte(mimeType))
+				err = writeLinks(w, [][3][]byte{
+					{entryNode, MIME_TYPE, []byte(mimeType)},
+					{makeNode(), UTF8, []byte(mimeType)},
+				})
+				if err != nil {
+					return err
+				}
 			}
 
 			if strings.HasSuffix(entry.Name(), ".go") {
-				writeLink(w, fileContentNode, UTF8, fileContent)
+				err = writeLink(w, fileContentNode, UTF8, fileContent)
 			} else {
-				writeLink(w, entryNode, BYTES, fileContent)
+				err = writeLink(w, entryNode, BYTES, fileContent)
+			}
+			if err != nil {
+				return err
 			}
 		}
 	}

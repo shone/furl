@@ -17,12 +17,6 @@ var (
 
 func main() {
 
-	// flag.Parse()
-
-	// for _, a := range flag.Args() {
-		// fmt.Println(a)
-	// }
-	
 	var err error
 
 	if len(os.Args) == 1 {
@@ -35,19 +29,19 @@ func main() {
 			printListFlagSet := flag.NewFlagSet("print-list", flag.ContinueOnError)
 			printListRoot := printListFlagSet.String("root", "", "")
 			printListVia  := printListFlagSet.String("via", "", "")
-			err := printListFlagSet.Parse(os.Args[2:]); 
+			err = printListFlagSet.Parse(os.Args[2:]); 
 			if err != nil {
-				log.Fatal(err)
+				break
 			}
 			if *printListRoot == "" {
-				log.Fatal("print-list requires --root argument")
+				err = fmt.Errorf("print-list requires --root argument")
 			}
 			if *printListVia == "" {
-				log.Fatal("print-list requires --via argument")
+				err = fmt.Errorf("print-list requires --via argument")
 			}
 			err = printList(os.Stdin, *printListRoot, *printListVia)
 		case "dir":
-			dirToStream(".", os.Stdout)
+			err = dirToStream(".", os.Stdout)
 		case "gonode":
 			node := make([]byte, 16)
 			rand.Read(node)

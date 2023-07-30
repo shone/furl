@@ -19,19 +19,29 @@ func makeUniqueNode() []byte {
 	return node
 }
 
-func writeNode(w io.Writer, b []byte) {
+func writeNode(w io.Writer, b []byte) error {
 	// TODO: Allow writing zero-sized nodes
 	bytesWritten := 0
 	for bytesWritten < len(b) {
 		packetSize := len(b) - bytesWritten
 		if packetSize > MAX_PACKET_SIZE {
 			packetSize = MAX_PACKET_SIZE
-			binary.Write(w, binary.BigEndian, PACKET_CONTINUATION)
+			err := binary.Write(w, binary.BigEndian, PACKET_CONTINUATION)
+			if err != nil {
+				return err
+			}
 		}
-		binary.Write(w, binary.BigEndian, uint16(packetSize))
-		w.Write(b[bytesWritten:bytesWritten+packetSize])
+		err := binary.Write(w, binary.BigEndian, uint16(packetSize))
+		if err != nil {
+			return err
+		}
+		_, err = w.Write(b[bytesWritten:bytesWritten+packetSize])
+		if err != nil {
+			return err
+		}
 		bytesWritten += packetSize
 	}
+	return nil
 }
 
 func readNode(r io.Reader) ([]byte, error) {
@@ -57,8 +67,8 @@ func readNode(r io.Reader) ([]byte, error) {
 
 		packet := make([]byte, packetSize)
 		if packetSize > 0 {
-			bytesRead, err := r.Read(packet)
-			if err != nil || bytesRead != int(packetSize) {
+			_, err := io.ReadFull(r, packet)
+			if err != nil {
 				return []byte{}, err
 			}
 		}
@@ -73,10 +83,33 @@ func readNode(r io.Reader) ([]byte, error) {
 	return node, nil
 }
 
-func writeLink(w io.Writer, from, via, to []byte) {
-	writeNode(w, from)
-	writeNode(w, via)
-	writeNode(w, to)
+func writeLink(w io.Writer, from, via, to []byte) error {
+	err := writeNode(w, from)
+	if err != nil {
+		return err
+	}
+
+	err = writeNode(w, via)
+	if err != nil {
+		return err
+	}
+
+	err = writeNode(w, to)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeLinks(w io.Writer, links [][3][]byte) error {
+	for i, link := range links {
+		err := writeLink(w, link[0], link[1], link[2])
+		if err != nil {
+			return fmt.Errorf("Error writing %d of %d links: %s", i+1, len(links), err)
+		}
+	}
+	return nil
 }
 
 func readLink(r io.Reader) (from []byte, via []byte, to []byte, err error) {

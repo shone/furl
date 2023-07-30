@@ -2,18 +2,16 @@ package main
 
 import (
 	"io"
-	"hash/maphash"
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"bytes"
 	"strings"
 )
 
-var hash maphash.Hash
-
 func hashBytes(b []byte) uint64 {
-	hash.Reset()
-	hash.Write(b)
-	return hash.Sum64()
+	sum := sha256.Sum256(b)
+	return binary.BigEndian.Uint64(sum[:])
 }
 
 type printType int
@@ -176,19 +174,20 @@ func printList(r io.Reader, listRootPrintString string, listViaPrintString strin
 			listMap[l[0]] = l[2]
 		}
 	}
+	fmt.Printf("listMap len: %d\n", len(listMap))
 
-	for from, to := range listMap {
-		printPrintable(hashToPrintableMap[from])
-		fmt.Print(" -> ")
-		printPrintable(hashToPrintableMap[to])
-		fmt.Print("\n")
-	}
-
-	// nodeHash := listRootHash
-	// for nodeHash != 0 {
-	// 	printPrintable(hashToPrintableMap[nodeHash])
+	// for from, to := range listMap {
+	// 	printPrintable(hashToPrintableMap[from])
+	// 	fmt.Print(" -> ")
+	// 	printPrintable(hashToPrintableMap[to])
 	// 	fmt.Print("\n")
-	// 	nodeHash = listMap[nodeHash]
 	// }
+
+	nodeHash := listRootHash
+	for nodeHash != 0 {
+		printPrintable(hashToPrintableMap[nodeHash])
+		fmt.Print("\n")
+		nodeHash = listMap[nodeHash]
+	}
 	return nil
 }
