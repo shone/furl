@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"io"
 	"fmt"
-	"log"
 	"crypto/rand"
 )
 
@@ -61,7 +60,7 @@ func readNode(r io.Reader) ([]byte, error) {
 				return []byte{}, err
 			}
 			if packetSize == PACKET_CONTINUATION {
-				log.Fatal("Invalid packet: read two continuation markers in a row")
+				return []byte{}, fmt.Errorf("Invalid packet: read two continuation markers in a row")
 			}
 		}
 

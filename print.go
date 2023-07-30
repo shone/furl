@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
-	"bytes"
 	"strings"
 )
 
@@ -48,6 +47,7 @@ func parseStreamForPrinting(r io.Reader) (linkHashes [][3]uint64, hashToBytesMap
 	hashToPrintableMap = make(map[uint64]Printable)
 	hashToBytesMap = make(map[uint64][]byte)
 	hashToUtf8StringMap := make(map[uint64]string)
+	utf8Hash := hashBytes(UTF8)
 
 	for {
 		from, via, to, readErr := readLink(r)
@@ -70,9 +70,8 @@ func parseStreamForPrinting(r io.Reader) (linkHashes [][3]uint64, hashToBytesMap
 		hashToBytesMap[viaHash] = via
 		hashToBytesMap[toHash] = to
 
-		if bytes.Equal(via, UTF8) {
+		if viaHash == utf8Hash {
 			hashToUtf8StringMap[fromHash] = string(to)
-			hashToUtf8StringMap[toHash] = string(to)
 		}
 	}
 
@@ -141,13 +140,45 @@ func printLinks(r io.Reader) error {
 	return nil
 }
 
-func lookupPrintableMap(str string, hashToPrintableMap map[uint64]Printable) uint64 {
-	for hash, printable := range hashToPrintableMap {
+func lookupPrintableMap(str string, hashToPrintableMap map[uint64]Printable) (uint64, error) {
+	var hash uint64
+	for h, printable := range hashToPrintableMap {
 		if printable.Str == str {
-			return hash
+			if hash != 0 {
+				return 0, fmt.Errorf("'%s' is ambiguous, multiple nodes have this printable representation.", str)
+			}
+			hash = h
 		}
 	}
-	return 0
+	if hash == 0 {
+		return hash, fmt.Errorf("Node '%s' not found.", str)
+	}
+	return hash, nil
+}
+
+func printLinksWithFilter(r io.Reader, nodePrintString string) error {
+	linkHashes, _, hashToPrintableMap, err := parseStreamForPrinting(r)
+	if err != nil {
+		return err
+	}
+
+	nodeHash, err := lookupPrintableMap(nodePrintString, hashToPrintableMap)
+	if err != nil {
+		return err
+	}
+
+	for _, link := range linkHashes {
+		if link[0] == nodeHash || link[1] == nodeHash || link[2] == nodeHash {
+			printPrintable(hashToPrintableMap[link[0]])
+			fmt.Print(" -> ")
+			printPrintable(hashToPrintableMap[link[1]])
+			fmt.Print(" -> ")
+			printPrintable(hashToPrintableMap[link[2]])
+			fmt.Print("\n")
+		}
+	}
+
+	return nil
 }
 
 func printList(r io.Reader, listRootPrintString string, listViaPrintString string) error {
@@ -156,32 +187,25 @@ func printList(r io.Reader, listRootPrintString string, listViaPrintString strin
 		return err
 	}
 
-	fmt.Printf("Link count: %d, printables count: %d\n", len(linkHashes), len(hashToPrintableMap))
-
-	listRootHash := lookupPrintableMap(listRootPrintString, hashToPrintableMap)
-	if listRootHash == 0 {
-		return fmt.Errorf("Unable to find given list root '%s' in input nodes.", listRootPrintString)
+	listRootHash, err := lookupPrintableMap(listRootPrintString, hashToPrintableMap)
+	if err != nil {
+		return err
 	}
 
-	listViaHash := lookupPrintableMap(listViaPrintString, hashToPrintableMap)
-	if listViaHash == 0 {
-		return fmt.Errorf("Unable to find given list via '%s' in input nodes.", listViaPrintString)
+	listViaHash, err := lookupPrintableMap(listViaPrintString, hashToPrintableMap)
+	if err != nil {
+		return err
 	}
 
 	listMap := make(map[uint64]uint64)
 	for _, l := range linkHashes {
 		if l[1] == listViaHash {
+			if val, alreadyFound := listMap[l[0]]; alreadyFound && val != l[2] {
+				return fmt.Errorf("Cannot traverse list: %s connects to both %s and %s", hashToPrintableMap[l[0]].Str, hashToPrintableMap[val].Str, hashToPrintableMap[l[2]].Str)
+			}
 			listMap[l[0]] = l[2]
 		}
 	}
-	fmt.Printf("listMap len: %d\n", len(listMap))
-
-	// for from, to := range listMap {
-	// 	printPrintable(hashToPrintableMap[from])
-	// 	fmt.Print(" -> ")
-	// 	printPrintable(hashToPrintableMap[to])
-	// 	fmt.Print("\n")
-	// }
 
 	nodeHash := listRootHash
 	for nodeHash != 0 {

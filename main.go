@@ -23,13 +23,25 @@ func main() {
 		err = printLinks(os.Stdin)
 	} else {
 		switch os.Args[1] {
+		case "print-links":
+			printLinksFlagSet := flag.NewFlagSet("print-links", flag.ContinueOnError)
+			withNode := printLinksFlagSet.String("with-node", "", "")
+			err = printLinksFlagSet.Parse(os.Args[2:])
+			if err != nil {
+				break
+			}
+			if *withNode != "" {
+				err = printLinksWithFilter(os.Stdin, *withNode)
+			} else {
+				err = printLinks(os.Stdin)
+			}
 		case "print-nodes":
 			err = printNodes(os.Stdin)
 		case "print-list":
 			printListFlagSet := flag.NewFlagSet("print-list", flag.ContinueOnError)
 			printListRoot := printListFlagSet.String("root", "", "")
 			printListVia  := printListFlagSet.String("via", "", "")
-			err = printListFlagSet.Parse(os.Args[2:]); 
+			err = printListFlagSet.Parse(os.Args[2:])
 			if err != nil {
 				break
 			}
@@ -49,7 +61,7 @@ func main() {
 			for i, b := range node {
 				hexStrings[i] = fmt.Sprintf("0x%02x", b)
 			}
-			fmt.Printf("[]byte{%s}\n", strings.Join(hexStrings, ","));
+			fmt.Printf("[]byte{%s}\n", strings.Join(hexStrings, ","))
 		}
 	}
 
