@@ -156,31 +156,6 @@ func lookupPrintableMap(str string, hashToPrintableMap map[uint64]Printable) (ui
 	return hash, nil
 }
 
-func printLinksWithFilter(r io.Reader, nodePrintString string) error {
-	linkHashes, _, hashToPrintableMap, err := parseStreamForPrinting(r)
-	if err != nil {
-		return err
-	}
-
-	nodeHash, err := lookupPrintableMap(nodePrintString, hashToPrintableMap)
-	if err != nil {
-		return err
-	}
-
-	for _, link := range linkHashes {
-		if link[0] == nodeHash || link[1] == nodeHash || link[2] == nodeHash {
-			printPrintable(hashToPrintableMap[link[0]])
-			fmt.Print(" -> ")
-			printPrintable(hashToPrintableMap[link[1]])
-			fmt.Print(" -> ")
-			printPrintable(hashToPrintableMap[link[2]])
-			fmt.Print("\n")
-		}
-	}
-
-	return nil
-}
-
 func printList(r io.Reader, listRootPrintString string, listViaPrintString string) error {
 	linkHashes, _, hashToPrintableMap, err := parseStreamForPrinting(r)
 	if err != nil {

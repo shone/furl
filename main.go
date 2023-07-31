@@ -19,50 +19,45 @@ func main() {
 
 	var err error
 
-	if len(os.Args) == 1 {
-		err = printLinks(os.Stdin)
+	var command string
+	if len(os.Args) >= 2 {
+		command = os.Args[1]
 	} else {
-		switch os.Args[1] {
-		case "print-links":
-			printLinksFlagSet := flag.NewFlagSet("print-links", flag.ContinueOnError)
-			withNode := printLinksFlagSet.String("with-node", "", "")
-			err = printLinksFlagSet.Parse(os.Args[2:])
-			if err != nil {
-				break
-			}
-			if *withNode != "" {
-				err = printLinksWithFilter(os.Stdin, *withNode)
-			} else {
-				err = printLinks(os.Stdin)
-			}
-		case "print-nodes":
-			err = printNodes(os.Stdin)
-		case "print-list":
-			printListFlagSet := flag.NewFlagSet("print-list", flag.ContinueOnError)
-			printListRoot := printListFlagSet.String("root", "", "")
-			printListVia  := printListFlagSet.String("via", "", "")
-			err = printListFlagSet.Parse(os.Args[2:])
-			if err != nil {
-				break
-			}
-			if *printListRoot == "" {
-				err = fmt.Errorf("print-list requires --root argument")
-			}
-			if *printListVia == "" {
-				err = fmt.Errorf("print-list requires --via argument")
-			}
-			err = printList(os.Stdin, *printListRoot, *printListVia)
-		case "dir":
-			err = dirToStream(".", os.Stdout)
-		case "gonode":
-			node := make([]byte, 16)
-			rand.Read(node)
-			hexStrings := make([]string, 16)
-			for i, b := range node {
-				hexStrings[i] = fmt.Sprintf("0x%02x", b)
-			}
-			fmt.Printf("[]byte{%s}\n", strings.Join(hexStrings, ","))
+		command = "print-links"
+	}
+
+	switch command {
+	case "print-links":
+		err = printLinks(os.Stdin)
+	case "print-nodes":
+		err = printNodes(os.Stdin)
+	case "print-list":
+		printListFlagSet := flag.NewFlagSet("print-list", flag.ContinueOnError)
+		printListRoot := printListFlagSet.String("root", "", "")
+		printListVia  := printListFlagSet.String("via", "", "")
+		err = printListFlagSet.Parse(os.Args[2:])
+		if err != nil {
+			break
 		}
+		if *printListRoot == "" {
+			err = fmt.Errorf("print-list requires --root argument")
+			break
+		}
+		if *printListVia == "" {
+			err = fmt.Errorf("print-list requires --via argument")
+			break
+		}
+		err = printList(os.Stdin, *printListRoot, *printListVia)
+	case "dir":
+		err = dirToStream(".", os.Stdout)
+	case "gonode":
+		node := make([]byte, 16)
+		rand.Read(node)
+		hexStrings := make([]string, 16)
+		for i, b := range node {
+			hexStrings[i] = fmt.Sprintf("0x%02x", b)
+		}
+		fmt.Printf("[]byte{%s}\n", strings.Join(hexStrings, ","))
 	}
 
 	if err != nil {
